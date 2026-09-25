@@ -2,7 +2,7 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/((?!assets/|ads\\.txt|robots\\.txt|sitemap\\.xml).*)",
+      "source": "/((?!assets/|ads\\.txt|robots\\.txt|sitemap\\.xml|coinzilla-verification\\.txt).*)",
       "destination": "/index.html"
     }
   ]
