@@ -116,7 +116,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
               Monetization &amp; Ads
             </h4>
             <p className="text-[11px] text-gray-400 leading-relaxed mb-3">
-              Monetized via verified crypto display networks (Coinzilla &amp; A-ADS).
+              Monetized via Google AdSense (pub-3344865492847998) &amp; crypto display networks.
             </p>
             <div className="flex flex-col gap-1 text-[11px]">
               <a
