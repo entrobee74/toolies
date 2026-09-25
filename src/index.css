@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #111411;
+    color: #FFFFFF;
+    overflow-x: hidden;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+.font-mono-nums {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+.terminal-border {
+  border: 1px solid #262E26;
+}
+
+.terminal-border-glow {
+  border: 1px solid #c5f300;
+  box-shadow: 0 0 15px rgba(197, 243, 0, 0.2);
+}
+
+.lime-glow {
+  box-shadow: 0 0 20px rgba(197, 243, 0, 0.25);
+}
+
+.lime-glow-sm {
+  box-shadow: 0 0 10px rgba(197, 243, 0, 0.15);
+}
+
+.coral-glow-sm {
+  box-shadow: 0 0 10px rgba(255, 77, 77, 0.2);
+}
+
+/* Custom terminal scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0c0f0c;
+}
+::-webkit-scrollbar-thumb {
+  background: #262E26;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #384638;
+}
+
+@keyframes flash-green {
+  0% { background-color: rgba(197, 243, 0, 0.25); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flash-red {
+  0% { background-color: rgba(255, 77, 77, 0.25); }
+  100% { background-color: transparent; }
+}
+
+.animate-flash-green {
+  animation: flash-green 0.35s ease-out;
+}
+
+.animate-flash-red {
+  animation: flash-red 0.35s ease-out;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.95); }
+}
+
+.animate-live-pulse {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "DEGENCALC — Memecoin Profit Calculator",
+  "description": "Free browser-based memecoin profit calculator. Live token lookup, real-time PnL, price impact estimator, fee stack, break-even multiple, and shareable result cards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

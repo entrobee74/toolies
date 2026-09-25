@@ -1,0 +1,5 @@
+# DEGENCALC ads.txt
+# Coinzilla & A-ADS Authorized Digital Sellers
+coinzilla.com, 1024859, DIRECT, f08c47fec0942fa0
+a-ads.com, 849204, DIRECT
+google.com, pub-9284729184719284, DIRECT, f08c47fec0942fa0
