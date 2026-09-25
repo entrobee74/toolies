@@ -1,9 +1,12 @@
 /**
- * DEGENCALC — Memecoin Profit Calculator & Terminal
- * Free browser-based calculator, 100% client-side, zero backend, zero API keys.
+ * FREE TOOLS SUITE — Multi-Tool Platform
+ * Tool 1: PIXELTEXT — AI Image Text Editor (Edit or replace text in any image)
+ * Tool 2: DEGENCALC — Memecoin Profit & Fee Calculator
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { GlobalToolBar, ActiveTool } from './components/common/GlobalToolBar';
+import { PixelTextView } from './components/pixeltext/PixelTextView';
 import { Header } from './components/Header';
 import { TokenLookup } from './components/TokenLookup';
 import { PositionCalculator } from './components/PositionCalculator';
@@ -14,14 +17,16 @@ import { FeeStack } from './components/FeeStack';
 import { ScenarioTable } from './components/ScenarioTable';
 import { ShareCardModal } from './components/ShareCardModal';
 import { AdPlacement } from './components/AdPlacement';
+import { AAdsUnit } from './components/AAdsUnit';
 import { SeoPageHeader, TraderGuideArticle, FaqSection } from './components/SeoPages';
 import { Footer } from './components/Footer';
 import { CalculatorInputs, CalculationResult, TokenMetadata } from './types/calculator';
 import { calculatePosition } from './utils/math';
 
-const LOCAL_STORAGE_KEY = 'degencalc_inputs_v1';
+const ACTIVE_TOOL_KEY = 'free_tools_active_tool_v1';
+const DEGEN_STORAGE_KEY = 'degencalc_inputs_v1';
 
-const DEFAULT_INPUTS: CalculatorInputs = {
+const DEFAULT_DEGEN_INPUTS: CalculatorInputs = {
   currency: 'USD',
   nativePriceUsd: 150, // SOL price baseline
   investmentAmount: 1000,
@@ -65,20 +70,41 @@ const DEFAULT_INPUTS: CalculatorInputs = {
 };
 
 export default function App() {
-  // Load saved inputs from localStorage or defaults
+  // Active Tool state (PixelText vs DegenCalc)
+  const [activeTool, setActiveTool] = useState<ActiveTool>(() => {
+    try {
+      const saved = localStorage.getItem(ACTIVE_TOOL_KEY);
+      if (saved === 'degencalc' || saved === 'pixeltext') return saved;
+    } catch (e) {
+      // ignore
+    }
+    return 'pixeltext'; // Default to the newly added PixelText tool
+  });
+
+  const handleSelectTool = (tool: ActiveTool) => {
+    setActiveTool(tool);
+    try {
+      localStorage.setItem(ACTIVE_TOOL_KEY, tool);
+    } catch (e) {
+      // ignore
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // --- DegenCalc state ---
   const [inputs, setInputs] = useState<CalculatorInputs>(() => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const saved = localStorage.getItem(DEGEN_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         return {
-          ...DEFAULT_INPUTS,
+          ...DEFAULT_DEGEN_INPUTS,
           ...parsed,
           fees: {
-            ...DEFAULT_INPUTS.fees,
+            ...DEFAULT_DEGEN_INPUTS.fees,
             ...(parsed.fees || {}),
             enabled: {
-              ...DEFAULT_INPUTS.fees.enabled,
+              ...DEFAULT_DEGEN_INPUTS.fees.enabled,
               ...(parsed.fees?.enabled || {}),
             },
           },
@@ -87,27 +113,24 @@ export default function App() {
     } catch (e) {
       console.warn('Could not read from localStorage', e);
     }
-    return DEFAULT_INPUTS;
+    return DEFAULT_DEGEN_INPUTS;
   });
 
-  const [currentTab, setCurrentTab] = useState<string>('calculator');
+  const [currentDegenTab, setCurrentDegenTab] = useState<string>('calculator');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // Sync to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(inputs));
+      localStorage.setItem(DEGEN_STORAGE_KEY, JSON.stringify(inputs));
     } catch (e) {
       console.warn('Could not save to localStorage', e);
     }
   }, [inputs]);
 
-  // Synchronous, pure live calculation on every render/state change
   const result: CalculationResult = useMemo(() => {
     return calculatePosition(inputs);
   }, [inputs]);
 
-  // When a token is selected from lookup or popular preset
   const handleTokenSelected = (token: TokenMetadata) => {
     const supply = token.marketCap > 0 && token.priceUsd > 0
       ? Math.round(token.marketCap / token.priceUsd)
@@ -118,19 +141,16 @@ export default function App() {
       tokenMeta: token,
       entryPrice: token.priceUsd,
       entryMcap: token.marketCap,
-      // Target a 5x moonshot exit by default
       exitPrice: token.priceUsd * 5,
       exitMcap: token.marketCap * 5,
       tokenSupply: supply > 0 ? supply : 1000000000,
     }));
   };
 
-  // Reset to default clean state
   const handleReset = () => {
-    setInputs(DEFAULT_INPUTS);
+    setInputs(DEFAULT_DEGEN_INPUTS);
   };
 
-  // 1-Tap set scenario as exit target
   const handleApplyScenarioAsExit = (targetPrice: number, targetMcap: number) => {
     setInputs((prev) => ({
       ...prev,
@@ -139,104 +159,180 @@ export default function App() {
     }));
   };
 
-  // Tab routing support
-  const handleTabChange = (tabId: string) => {
-    setCurrentTab(tabId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
-    <div className="min-h-screen bg-[#111411] text-[#FFFFFF] flex flex-col font-sans selection:bg-[#c5f300] selection:text-black">
-      {/* Terminal Top Navigation Header */}
-      <Header
-        currentTab={currentTab}
-        onSelectTab={handleTabChange}
-        onOpenShare={() => setIsShareModalOpen(true)}
-        onReset={handleReset}
+    <div className="min-h-screen bg-[#121212] text-[#FFFFFF] flex flex-col font-sans selection:bg-[#00DDCB] selection:text-black">
+      {/* 1. Global Multi-Tool Bar & Expandable Sidebar Drawer */}
+      <GlobalToolBar
+        activeTool={activeTool}
+        onSelectTool={handleSelectTool}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 space-y-6">
-        {/* Dynamic SEO Title & Intro */}
-        <SeoPageHeader currentTab={currentTab} onSelectTab={handleTabChange} />
+      {/* 2. Tool Content Switcher */}
+      {activeTool === 'pixeltext' ? (
+        /* PIXELTEXT SUITE */
+        <div className="flex-1 flex flex-col">
+          <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-8">
+            <PixelTextView />
+          </main>
 
-        {/* If Guide Tab */}
-        {currentTab === 'guide' && (
-          <TraderGuideArticle onGoToCalculator={() => handleTabChange('calculator')} />
-        )}
+          {/* Sticky Mobile Ad Banner */}
+          <AdPlacement slot="sticky-mobile" />
 
-        {/* If FAQ Tab */}
-        {currentTab === 'faq' && (
-          <FaqSection />
-        )}
+          {/* Unified Compliance Footer */}
+          <footer className="border-t border-[#2A2A2A] bg-[#0c0c0c] text-gray-500 font-inter text-xs pt-12 pb-20 sm:pb-12 mt-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 pb-8 border-b border-[#2A2A2A]">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="font-space font-extrabold text-base text-white tracking-tight">
+                      PIXEL<span className="text-[#00DDCB]">TEXT</span>
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#00DDCB]/10 text-[#00DDCB] border border-[#00DDCB]/30">
+                      FREE UTILITY
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-400 leading-relaxed mb-3">
+                    Free AI-powered in-image text replacement engine. Preserves font styles, angles, perspective, and backgrounds with zero sign-up.
+                  </p>
+                  <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#1A1A1A] border border-[#2A2A2A] text-[10px] text-[#00DDCB]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00DDCB]" />
+                    In-Memory Processing • No Image Storage
+                  </div>
+                </div>
 
-        {/* Core Terminal Components (Rendered on calculator, price-impact, and solana tabs) */}
-        {currentTab !== 'guide' && currentTab !== 'faq' && (
-          <>
-            {/* 1. DexScreener Live Token Lookup */}
-            <TokenLookup
-              onTokenSelected={handleTokenSelected}
-              currentToken={inputs.tokenMeta}
-            />
+                <div>
+                  <h4 className="text-xs font-space font-bold uppercase tracking-wider text-white mb-3">
+                    Free Web Tools
+                  </h4>
+                  <ul className="space-y-2 text-[11px]">
+                    <li>
+                      <button onClick={() => handleSelectTool('pixeltext')} className="text-[#00DDCB] hover:underline">
+                        PixelText — AI Image Text Editor
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => handleSelectTool('degencalc')} className="hover:text-white transition-colors">
+                        DegenCalc — Memecoin Profit Calculator
+                      </button>
+                    </li>
+                  </ul>
+                </div>
 
-            {/* 2. Position Inputs */}
-            <PositionCalculator
-              inputs={inputs}
-              onChange={setInputs}
-              tokensReceived={result.tokensReceived}
-            />
+                <div>
+                  <h4 className="text-xs font-space font-bold uppercase tracking-wider text-white mb-3">
+                    Popular Guides
+                  </h4>
+                  <ul className="space-y-2 text-[11px]">
+                    <li>
+                      <span className="hover:text-white transition-colors cursor-pointer">
+                        How to edit text on product photos
+                      </span>
+                    </li>
+                    <li>
+                      <span className="hover:text-white transition-colors cursor-pointer">
+                        Replacing storefront signage with AI
+                      </span>
+                    </li>
+                    <li>
+                      <span className="hover:text-white transition-colors cursor-pointer">
+                        Meme caption swap tips
+                      </span>
+                    </li>
+                  </ul>
+                </div>
 
-            {/* 3. Aha-Moment Break-Even Panel (Prominent) */}
-            <BreakEvenPanel result={result} fees={inputs.fees} />
+                <div>
+                  <h4 className="text-xs font-space font-bold uppercase tracking-wider text-white mb-3">
+                    Verified Ads &amp; Privacy
+                  </h4>
+                  <p className="text-[11px] text-gray-400 leading-relaxed mb-3">
+                    Supported by Google AdSense (pub-3344865492847998) &amp; Coinzilla display ads.
+                  </p>
+                  <div className="flex flex-col gap-1 text-[11px]">
+                    <a href="/ads.txt" target="_blank" rel="noreferrer" className="text-[#00DDCB] hover:underline">
+                      View /ads.txt
+                    </a>
+                    <span className="text-gray-500">Contact: support@pixeltext.io</span>
+                  </div>
+                </div>
+              </div>
 
-            {/* 4. Live Results Dashboard */}
-            <ResultsDashboard
-              result={result}
-              inputs={inputs}
-              onOpenShareCard={() => setIsShareModalOpen(true)}
-            />
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-gray-500">
+                <div>© {new Date().getFullYear()} PixelText. Free browser-based AI text editor.</div>
+                <div>Processed locally &amp; in-memory. Zero images stored or logged.</div>
+              </div>
+            </div>
+          </footer>
+        </div>
+      ) : (
+        /* DEGENCALC SUITE */
+        <div className="flex-1 flex flex-col">
+          <Header
+            currentTab={currentDegenTab}
+            onSelectTab={setCurrentDegenTab}
+            onOpenShare={() => setIsShareModalOpen(true)}
+            onReset={handleReset}
+          />
 
-            {/* 5. Price Impact Estimator */}
-            <PriceImpactEstimator
-              tradeSizeUsd={result.investedUsd}
-              liquidityUsd={result.liquidityUsd || 0}
-              priceImpactPct={result.priceImpactPct}
-            />
+          <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 space-y-6">
+            <SeoPageHeader currentTab={currentDegenTab} onSelectTab={setCurrentDegenTab} />
 
-            {/* 6. Toggleable Fee Stack */}
-            <FeeStack
-              fees={inputs.fees}
-              onChange={(fees) => setInputs((prev) => ({ ...prev, fees }))}
-              currency={inputs.currency}
-              nativePriceUsd={inputs.nativePriceUsd}
-            />
+            {currentDegenTab === 'guide' && (
+              <TraderGuideArticle onGoToCalculator={() => setCurrentDegenTab('calculator')} />
+            )}
 
-            {/* 7. Scenario Matrix (2x, 5x, 10x, 50x, 100x) */}
-            <ScenarioTable
-              scenarios={result.scenarios}
-              inputs={inputs}
-              onApplyScenarioAsExit={handleApplyScenarioAsExit}
-            />
+            {currentDegenTab === 'faq' && <FaqSection />}
 
-            {/* Coinzilla / A-ADS Leaderboard Display Slot */}
-            <AdPlacement slot="leaderboard" />
-          </>
-        )}
-      </main>
+            {currentDegenTab !== 'guide' && currentDegenTab !== 'faq' && (
+              <>
+                <TokenLookup
+                  onTokenSelected={handleTokenSelected}
+                  currentToken={inputs.tokenMeta}
+                />
+                <PositionCalculator
+                  inputs={inputs}
+                  onChange={setInputs}
+                  tokensReceived={result.tokensReceived}
+                />
+                <BreakEvenPanel result={result} fees={inputs.fees} />
+                <ResultsDashboard
+                  result={result}
+                  inputs={inputs}
+                  onOpenShareCard={() => setIsShareModalOpen(true)}
+                />
+                <PriceImpactEstimator
+                  tradeSizeUsd={result.investedUsd}
+                  liquidityUsd={result.liquidityUsd || 0}
+                  priceImpactPct={result.priceImpactPct}
+                />
+                <FeeStack
+                  fees={inputs.fees}
+                  onChange={(fees) => setInputs((prev) => ({ ...prev, fees }))}
+                  currency={inputs.currency}
+                  nativePriceUsd={inputs.nativePriceUsd}
+                />
+                <ScenarioTable
+                  scenarios={result.scenarios}
+                  inputs={inputs}
+                  onApplyScenarioAsExit={handleApplyScenarioAsExit}
+                />
+                <AAdsUnit />
+                <AdPlacement slot="leaderboard" />
+              </>
+            )}
+          </main>
 
-      {/* Share Card Modal (1080x1350 Canvas PNG render) */}
-      <ShareCardModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        inputs={inputs}
-        result={result}
-      />
+          <ShareCardModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            inputs={inputs}
+            result={result}
+          />
 
-      {/* Sticky Mobile Ad Banner (Coinzilla / A-ADS unit with layout guard) */}
-      <AdPlacement slot="sticky-mobile" />
-
-      {/* Comprehensive Terminal Footer */}
-      <Footer onSelectTab={handleTabChange} />
+          <AdPlacement slot="sticky-mobile" />
+          <Footer onSelectTab={setCurrentDegenTab} />
+        </div>
+      )}
     </div>
   );
 }
